@@ -86,21 +86,13 @@ Wait until the 3 container are built.
 
 ## Deploy AzureML Container build pipeline
 
-### Copy local model files to pvc
-
-```
-oc apply -f oc-debug-pod.yaml
-```
-
-### Deploy and run the pipeline
-
-#### Deploy pipeline
+### Deploy pipeline
 
 ```
 oc apply -k azureml-container-pipeline/
 ```
 
-#### Copy local model files to pvc
+### Copy local model files to pvc
 
 ```
 oc apply -f oc-debug-pod.yaml
@@ -108,7 +100,7 @@ oc cp models/bike-rentals-auto-ml/ oc-debug-pod:/mnt/build-cache-pv
 oc delete pod/oc-debug-pod
 ```
 
-#### Run pipeline
+### Run pipeline
 
 ```
 oc create  -f azureml-container-pipeline/azureml-container-pipelinerun-bike-rentals.yaml 
