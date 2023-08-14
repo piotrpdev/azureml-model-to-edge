@@ -88,8 +88,8 @@ Wait until the 3 container are built.
 
 ### Copy local model files to pvc
 
+```
 oc apply -f oc-debug-pod.yaml
-
 ```
 
 ### Deploy and run the pipeline
