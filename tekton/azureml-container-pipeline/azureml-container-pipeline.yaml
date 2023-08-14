@@ -13,19 +13,31 @@ spec:
     name: azure-env-secret-name
     type: string
   tasks:
-  - name: download-azureml-model
+  # - name: download-azureml-model
+  #   params:
+  #   - name: model-name
+  #     value: $(params.model-name)
+  #   - name: model-version
+  #     value: $(params.model-version)
+  #   - name: azure-env-secret-name
+  #     value: $(params.azure-env-secret-name)
+  #   - name: current-namespace
+  #     value: $(context.pipelineRun.namespace)
+  #   taskRef:
+  #     kind: Task
+  #     name: download-azureml-model
+  #   workspaces:
+  #   - name: workspace
+  #     workspace: ws
+  - name: check-model-exists
     params:
     - name: model-name
       value: $(params.model-name)
-    - name: model-version
-      value: $(params.model-version)
-    - name: azure-env-secret-name
-      value: $(params.azure-env-secret-name)
     - name: current-namespace
       value: $(context.pipelineRun.namespace)
     taskRef:
       kind: Task
-      name: download-azureml-model
+      name: check-model-exists
     workspaces:
     - name: workspace
       workspace: ws
@@ -36,7 +48,7 @@ spec:
     - name: current-namespace
       value: $(context.pipelineRun.namespace)
     runAfter:
-    - download-azureml-model
+    - check-model-exists
     taskRef:
       kind: Task
       name: mlflow-generate-dockerfile

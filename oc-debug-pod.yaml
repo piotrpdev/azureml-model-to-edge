@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oc-debug-pod
+spec:
+  volumes:
+    - name: build-cache-pv
+      persistentVolumeClaim:
+        claimName: build-cache-pvc
+  containers:
+  - name: oc-debug-pod
+    image: ubi9
+    stdin: true
+    tty: true
+    volumeMounts:
+        - mountPath: "/mnt/build-cache-pv"
+          name: build-cache-pv

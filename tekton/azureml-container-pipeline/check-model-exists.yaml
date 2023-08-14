@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: check-model-exists
+spec:
+  description: This Task can be used to check if the model files are present
+  params:
+  - name: model-name
+    type: string
+  - name: current-namespace 
+    default: "default"
+    type: string
+  steps:
+  - name: check-model-files
+    image: image-registry.openshift-image-registry.svc:5000/$(params.current-namespace)/azure-python:latest
+    script: ls -l $(params.model-name)/mlflow-model/
+    workingDir: $(workspaces.workspace.path)
+
+  workspaces:
+  - description: The workspace for the downloaded model.
+    name: workspace

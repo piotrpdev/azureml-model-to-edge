@@ -86,37 +86,32 @@ Wait until the 3 container are built.
 
 ## Deploy AzureML Container build pipeline
 
+### Copy local model files to pvc
 
-### First, create a secret with the Azure credentials
+oc apply -f oc-debug-pod.yaml
 
-Create an `.azure-env` file. E.g.:
-
-```
-RESOURCEGROUP=<resourcegroup>
-WORKSPACE=<workspace>
-SUBSCRIPTION=<subscription>
-AZURE_TENANT_ID=<azure_tenant_id>
-AZURE_CLIENT_ID=<azure_client_id>
-AZURE_CLIENT_SECRET=<azure_client_secret>
-```
-
-Create the secret:
-```
-oc create secret generic azure-env --from-env-file=.azure-env
-``` 
-
-
-### Add required tasks (pls skip - pipeline use preinstalled ClusterTasks):
-```
-oc apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/git-clone/0.9/git-clone.yaml
-oc apply -f https://api.hub.tekton.dev/v1/resource/tekton/task/buildah/0.1/raw
-oc apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/openshift-client/0.2/openshift-client.yaml
 ```
 
 ### Deploy and run the pipeline
+
+#### Deploy pipeline
+
 ```
 oc apply -k azureml-container-pipeline/
-oc create  -f azureml-container-pipeline/azureml-container-pipelinerun.yaml 
+```
+
+#### Copy local model files to pvc
+
+```
+oc apply -f oc-debug-pod.yaml
+oc cp models/bike-rentals-auto-ml/ oc-debug-pod:/mnt/build-cache-pv
+oc delete pod/oc-debug-pod
+```
+
+#### Run pipeline
+
+```
+oc create  -f azureml-container-pipeline/azureml-container-pipelinerun-bike-rentals.yaml 
 ```
 
 ## Deploy Test MlFlow Container image pipeline
