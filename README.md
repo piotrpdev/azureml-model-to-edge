@@ -114,8 +114,8 @@ oc create  -f azureml-container-pipeline/azureml-container-pipelinerun-bike-rent
 - Apply build-secret. E.g.:
 
 ```
-oc apply -f <downloaddir>/manuela-build-secret.yml 
-oc secret link pipeline manuela-build-pull-secret
+oc apply -f <downloaddir>/rhoai-edge-build-secret.yml 
+oc secret link pipeline rhoai-edge-build-pull-secret
 ```
 
 ### Add required tasks: (pls skip - pipeline use preinstalled ClusterTasks)

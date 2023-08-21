@@ -57,6 +57,18 @@ spec:
       workspace: ws
     - name: dockerfile
       workspace: docker
+  - name: create-imagestream
+    params:
+    - name: SCRIPT
+      value: oc create imagestream $(params.model-name)  --lookup-local=true --dry-run=client
+        -o yaml | oc apply -f -
+    - name: VERSION
+      value: latest
+    runAfter:
+    - mlflow-generate-dockerfile
+    taskRef:
+      kind: ClusterTask
+      name: openshift-client
   - name: build-mlflow-container
     params:
     - name: IMAGE
@@ -87,18 +99,6 @@ spec:
     workspaces:
     - name: source
       workspace: docker
-  - name: create-imagestream
-    params:
-    - name: SCRIPT
-      value: oc create imagestream $(params.model-name)  --lookup-local=true --dry-run=client
-        -o yaml | oc apply -f -
-    - name: VERSION
-      value: latest
-    runAfter:
-    - mlflow-generate-dockerfile
-    taskRef:
-      kind: ClusterTask
-      name: openshift-client
   workspaces:
   - name: ws
   - name: docker

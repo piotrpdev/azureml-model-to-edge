@@ -15,7 +15,7 @@ spec:
     default: "1"
     type: string
   - name: container-repo
-    default: "quay.io/manuela"
+    default: "quay.io/rhoai-edge"
     type: string
   - name: current-namespace 
     default: "default"

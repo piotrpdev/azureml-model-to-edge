@@ -12,7 +12,7 @@ spec:
   - default: $(context.pipelineRun.namespace)
     name: target-namespace
     type: string
-  - default: manuela
+  - default: rhoai-edge
     name: target-imagerepo
     type: string
   tasks:
