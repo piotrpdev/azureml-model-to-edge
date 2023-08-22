@@ -14,7 +14,7 @@ spec:
   source:
     git:
       ref: 'dev'
-      uri: 'https://github.com/stefan-bergstein/azureml-model-to-edge.git'
+      uri: 'https://github.com/piotrpdev/azureml-model-to-edge.git'
     contextDir: 'tekton/mlflow-image'
   strategy:
     dockerStrategy:
