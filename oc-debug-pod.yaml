@@ -7,6 +7,9 @@ spec:
     - name: build-cache-pv
       persistentVolumeClaim:
         claimName: build-cache-pvc
+    - name: dockerfile-cache-pv
+      persistentVolumeClaim:
+        claimName: dockerfile-cache-pvc
   containers:
   - name: oc-debug-pod
     image: ubi9
@@ -15,3 +18,5 @@ spec:
     volumeMounts:
         - mountPath: "/mnt/build-cache-pv"
           name: build-cache-pv
+        - mountPath: "/mnt/dockerfile-cache-pv"
+          name: dockerfile-cache-pv
