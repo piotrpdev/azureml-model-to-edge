@@ -1,0 +1,41 @@
+# Code written by @israel-hdez https://gist.github.com/israel-hdez/1848d5a9788140c6f2e42ce316c70d5b#file-containerfile-mlserver-mlflow
+FROM registry.access.redhat.com/ubi9/python-39:1 as env-creator
+
+# Install miniconda as a helper to create a portable python environment
+RUN mkdir -p ~/miniconda3 && \
+  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh && \
+  bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3 && \
+  rm -rf ~/miniconda3/miniconda.sh
+
+# Clone a repo that contains an MLFlow model. This one comes from Azure ML.
+# From the cloned repo, take only the model of interest: bike-share-auto-ml
+RUN git clone --depth 1 --branch dev https://github.com/piotrpdev/azureml-model-to-edge.git && \
+  mkdir model && \
+  cp -R azureml-model-to-edge/models/bike-rentals-auto-ml/* model/
+
+# Download model dependencies and create a portable tarball
+# The tarball is placed inside the model directory.
+RUN . ~/miniconda3/bin/activate && \
+  conda env create -n mlflow-env -f model/conda.yaml && \
+  conda activate mlflow-env && \
+  pip install mlserver-mlflow && \
+  conda list && \
+  conda deactivate && \
+  conda activate && \
+  conda install conda-pack && \
+  conda-pack -n mlflow-env -o model/environment.tar.gz
+
+# Create the MLServer container. Use the slim image, since we are providing an environment tarball.
+# 
+FROM docker.io/seldonio/mlserver:1.3.5-slim
+
+# Copy both the model together with its environment tarball.
+COPY --from=env-creator --chown=1000:1000 /opt/app-root/src/model /mnt/models/
+
+# Specify that the model is in MLFlow format, and some additional flags.
+ENV MLSERVER_MODEL_IMPLEMENTATION=mlserver_mlflow.MLflowRuntime MLSERVER_HTTP_PORT=8080 MLSERVER_GRPC_PORT=9000
+ENV MLSERVER_MODEL_URI=/mnt/models MLSERVER_MODEL_NAME=MLFlowModel
+
+EXPOSE 8080
+
+USER 1001

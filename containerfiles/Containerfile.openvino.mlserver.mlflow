@@ -1,0 +1,23 @@
+# Create the MLServer container.
+# 
+FROM docker.io/openvino/model_server:latest
+
+USER root
+
+RUN apt-get update && apt-get install -y --no-install-recommends git
+
+RUN git clone --depth 1 --branch dev https://github.com/piotrpdev/azureml-model-to-edge.git && \
+  mkdir -p models/1 && \
+  cp -R azureml-model-to-edge/models/tensorflow-housing/tf2model/* /models/1/
+
+RUN rm -f /models/1/fingerprint.pb
+
+EXPOSE 9001 8080
+
+USER 1001
+
+# https://stackoverflow.com/a/41207910/19020549
+ENTRYPOINT ["/usr/bin/env"]
+
+# sudo docker run -p 9001:9001 -p 8001:8001 e77dfe534db5 --model_path /models --model_name tensorflow_housing --port 9001 --rest_port 8080 --shape auto
+CMD ["/ovms/bin/ovms", "--model_path", "/models", "--model_name", "tensorflow_housing", "--port", "9001", "--rest_port", "8080", "--shape", "auto"]
