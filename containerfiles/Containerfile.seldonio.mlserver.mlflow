@@ -1,5 +1,33 @@
+# Download model from Amazon S3
+FROM quay.io/opendatahub/kserve-storage-initializer:v0.11 as s3_downloader
+
+USER root
+
+# aws-storage-config is bound by running, e.g.: podman build --secret id=aws-storage-config,src=./aws-storage-config
+# The file should have this contents (replace values):
+#   { "type": "s3", "access_key_id": "$", "secret_access_key": "$", "endpoint_url": "$", "bucket": "example-models", "region": "us-west-1" }
+RUN --mount=type=secret,id=aws-storage-config,target=/mnt/aws-storage-config,uid=1000 \
+  STORAGE_CONFIG="$(cat /mnt/aws-storage-config)" /storage-initializer/scripts/initializer-entrypoint \
+  's3://rhoai-edge-models/bike-rentals-auto-ml' \
+  /home/bike-rentals-auto-ml
+
+# # Download model from Azure
+# FROM quay.io/opendatahub/kserve-storage-initializer:v0.11 as azure_downloader
+
+# # az-storage-credentials is bound by running, e.g.: podman build --secret id=az-storage-credentials,src=./az-storage-credentials
+# # The file should have this contents:
+# #   AZ_TENANT_ID=tenant_id
+# #   AZ_CLIENT_ID=client_id
+# #   AZ_CLIENT_SECRET=client_secret
+# RUN --mount=type=secret,id=az-storage-credentials,target=/mnt/az-storage-credentials,uid=1000 \
+#   export $(cat /mnt/az-storage-credentials) && /storage-initializer/scripts/initializer-entrypoint \
+#   'https://modelstoreaccount.blob.core.windows.net/model-store/model.joblib' \
+#   /home/kserve
+
 # Code written by @israel-hdez https://gist.github.com/israel-hdez/1848d5a9788140c6f2e42ce316c70d5b#file-containerfile-mlserver-mlflow
 FROM registry.access.redhat.com/ubi9/python-39:1 as env-creator
+
+USER root
 
 # Install miniconda as a helper to create a portable python environment
 RUN mkdir -p ~/miniconda3 && \
@@ -7,11 +35,13 @@ RUN mkdir -p ~/miniconda3 && \
   bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3 && \
   rm -rf ~/miniconda3/miniconda.sh
 
+COPY --from=s3_downloader /home/bike-rentals-auto-ml/ /opt/app-root/src/model/
+
 # Clone a repo that contains an MLFlow model. This one comes from Azure ML.
 # From the cloned repo, take only the model of interest: bike-share-auto-ml
-RUN git clone --depth 1 --branch dev https://github.com/piotrpdev/azureml-model-to-edge.git && \
-  mkdir model && \
-  cp -R azureml-model-to-edge/models/bike-rentals-auto-ml/* model/
+# RUN git clone --depth 1 --branch dev https://github.com/piotrpdev/azureml-model-to-edge.git && \
+#   mkdir model && \
+#   cp -R azureml-model-to-edge/models/bike-rentals-auto-ml/* model/
 
 # Download model dependencies and create a portable tarball
 # The tarball is placed inside the model directory.
@@ -33,9 +63,9 @@ FROM docker.io/seldonio/mlserver:1.3.5-slim
 COPY --from=env-creator --chown=1000:1000 /opt/app-root/src/model /mnt/models/
 
 # Specify that the model is in MLFlow format, and some additional flags.
-ENV MLSERVER_MODEL_IMPLEMENTATION=mlserver_mlflow.MLflowRuntime MLSERVER_HTTP_PORT=8080 MLSERVER_GRPC_PORT=9000
+ENV MLSERVER_MODEL_IMPLEMENTATION=mlserver_mlflow.MLflowRuntime MLSERVER_HTTP_PORT=8080 MLSERVER_GRPC_PORT=9090
 ENV MLSERVER_MODEL_URI=/mnt/models MLSERVER_MODEL_NAME=MLFlowModel
 
-EXPOSE 8080
+EXPOSE 8080 9090
 
 USER 1000

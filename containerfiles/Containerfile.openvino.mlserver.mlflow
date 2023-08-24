@@ -1,23 +1,43 @@
+# Download model from Amazon S3
+FROM quay.io/opendatahub/kserve-storage-initializer:v0.11 as s3_downloader
+
+USER root
+
+# aws-storage-config is bound by running, e.g.: podman build --secret id=aws-storage-config,src=./aws-storage-config
+# The file should have this contents (replace values):
+#   { "type": "s3", "access_key_id": "$", "secret_access_key": "$", "endpoint_url": "$", "bucket": "example-models", "region": "us-west-1" }
+RUN --mount=type=secret,id=aws-storage-config,target=/mnt/aws-storage-config,uid=1000 \
+  STORAGE_CONFIG="$(cat /mnt/aws-storage-config)" /storage-initializer/scripts/initializer-entrypoint \
+  's3://rhoai-edge-models/tensorflow-housing' \
+  /home/tensorflow-housing
+
+# # Download model from Azure
+# FROM quay.io/opendatahub/kserve-storage-initializer:v0.11 as azure_downloader
+
+# # az-storage-credentials is bound by running, e.g.: podman build --secret id=az-storage-credentials,src=./az-storage-credentials
+# # The file should have this contents:
+# #   AZ_TENANT_ID=tenant_id
+# #   AZ_CLIENT_ID=client_id
+# #   AZ_CLIENT_SECRET=client_secret
+# RUN --mount=type=secret,id=az-storage-credentials,target=/mnt/az-storage-credentials,uid=1000 \
+#   export $(cat /mnt/az-storage-credentials) && /storage-initializer/scripts/initializer-entrypoint \
+#   'https://modelstoreaccount.blob.core.windows.net/model-store/model.joblib' \
+#   /home/kserve
+
 # Create the MLServer container.
 # 
 FROM docker.io/openvino/model_server:latest
 
 USER root
+RUN mkdir /models && chown ovms:ovms /models
 
-RUN apt-get update && apt-get install -y --no-install-recommends git
-
-RUN git clone --depth 1 --branch dev https://github.com/piotrpdev/azureml-model-to-edge.git && \
-  mkdir -p models/1 && \
-  cp -R azureml-model-to-edge/models/tensorflow-housing/tf2model/* /models/1/
-
+USER ovms
+COPY --from=s3_downloader --chown=ovms:ovms /home/tensorflow-housing/tf2model /models/1
 RUN rm -f /models/1/fingerprint.pb
 
-EXPOSE 9001 8080
-
-USER 1001
-
 # https://stackoverflow.com/a/41207910/19020549
-ENTRYPOINT ["/usr/bin/env"]
+# ENTRYPOINT ["/usr/bin/env"]
 
-# sudo docker run -p 9001:9001 -p 8001:8001 e77dfe534db5 --model_path /models --model_name tensorflow_housing --port 9001 --rest_port 8080 --shape auto
-CMD ["/ovms/bin/ovms", "--model_path", "/models", "--model_name", "tensorflow_housing", "--port", "9001", "--rest_port", "8080", "--shape", "auto"]
+EXPOSE 9090 8080
+
+CMD ["/ovms/bin/ovms", "--model_path", "/models", "--model_name", "tensorflow_housing", "--port", "9090", "--rest_port", "8080", "--shape", "auto"]
