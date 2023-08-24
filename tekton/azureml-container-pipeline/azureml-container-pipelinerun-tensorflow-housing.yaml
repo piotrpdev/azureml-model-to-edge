@@ -8,6 +8,8 @@ spec:
   params:
   - name: model-name
     value: tensorflow-housing
+  - name: containerfile-url
+    value: "https://raw.githubusercontent.com/piotrpdev/azureml-model-to-edge/dev/containerfiles/Containerfile.openvino.mlserver.mlflow"
   - name: model-version
     value: "1"
   - name: azure-env-secret-name

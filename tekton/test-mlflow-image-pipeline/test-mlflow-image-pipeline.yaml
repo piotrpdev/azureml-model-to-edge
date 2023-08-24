@@ -9,6 +9,8 @@ spec:
   - default: "1"
     name: model-version
     type: string
+  - name: test-endpoint
+    type: string
   - default: $(context.pipelineRun.namespace)
     name: target-namespace
     type: string
@@ -45,6 +47,8 @@ spec:
       value: $(params.model-name)
     - name: model-version
       value: $(params.model-version)
+    - name: test-endpoint
+      value: $(params.test-endpoint)
     runAfter:
     - create-service
     taskRef:

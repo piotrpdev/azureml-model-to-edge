@@ -9,6 +9,8 @@ spec:
   - default: "1"
     name: model-version
     type: string
+  - name: containerfile-url
+    type: string
   - default: azure-env
     name: azure-env-secret-name
     type: string
@@ -29,32 +31,46 @@ spec:
   #   workspaces:
   #   - name: workspace
   #     workspace: ws
-  - name: check-model-exists
+  # - name: check-model-exists
+  #   params:
+  #   - name: model-name
+  #     value: $(params.model-name)
+  #   - name: current-namespace
+  #     value: $(context.pipelineRun.namespace)
+  #   taskRef:
+  #     kind: Task
+  #     name: check-model-exists
+  #   workspaces:
+  #   - name: workspace
+  #     workspace: ws
+  # - name: mlflow-generate-dockerfile
+  #   params:
+  #   - name: model-name
+  #     value: $(params.model-name)
+  #   - name: current-namespace
+  #     value: $(context.pipelineRun.namespace)
+  #   runAfter:
+  #   - check-model-exists
+  #   taskRef:
+  #     kind: Task
+  #     name: mlflow-generate-dockerfile
+  #   workspaces:
+  #   - name: workspace
+  #     workspace: ws
+  #   - name: dockerfile
+  #     workspace: docker
+  - name: download-containerfile
     params:
     - name: model-name
       value: $(params.model-name)
+    - name: containerfile-url
+      value: $(params.containerfile-url)
     - name: current-namespace
       value: $(context.pipelineRun.namespace)
     taskRef:
       kind: Task
-      name: check-model-exists
+      name: download-containerfile
     workspaces:
-    - name: workspace
-      workspace: ws
-  - name: mlflow-generate-dockerfile
-    params:
-    - name: model-name
-      value: $(params.model-name)
-    - name: current-namespace
-      value: $(context.pipelineRun.namespace)
-    runAfter:
-    - check-model-exists
-    taskRef:
-      kind: Task
-      name: mlflow-generate-dockerfile
-    workspaces:
-    - name: workspace
-      workspace: ws
     - name: dockerfile
       workspace: docker
   - name: create-imagestream
@@ -65,7 +81,7 @@ spec:
     - name: VERSION
       value: latest
     runAfter:
-    - mlflow-generate-dockerfile
+     - download-containerfile
     taskRef:
       kind: ClusterTask
       name: openshift-client
