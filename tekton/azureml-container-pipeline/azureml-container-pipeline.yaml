@@ -14,6 +14,9 @@ spec:
   - default: azure-env
     name: azure-env-secret-name
     type: string
+  - default: aws-env
+    name: aws-env-secret-name
+    type: string
   tasks:
   - name: download-containerfile
     params:
@@ -71,6 +74,9 @@ spec:
     workspaces:
     - name: source
       workspace: docker
+    - name: aws-secret
+      secret:
+        secretName: $(params.aws-env)
   workspaces:
   - name: ws
   - name: docker

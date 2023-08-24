@@ -162,3 +162,5 @@ cython_debug/
 *-secret.yaml
 *-secret.yml
 aws-storage-config
+tekton/azureml-container-pipeline/azureml-container-aws-creds-real.yaml
+tekton/azureml-container-pipeline/aws-env-real.yaml

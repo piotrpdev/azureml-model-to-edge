@@ -14,6 +14,8 @@ spec:
     value: "https://raw.githubusercontent.com/piotrpdev/azureml-model-to-edge/dev/containerfiles/Containerfile.seldonio.mlserver.mlflow"
   - name: azure-env-secret-name
     value: azure-env
+  - name: aws-env-secret-name
+    value: aws-env
   pipelineRef:
     name: azureml-container
   serviceAccountName: pipeline
