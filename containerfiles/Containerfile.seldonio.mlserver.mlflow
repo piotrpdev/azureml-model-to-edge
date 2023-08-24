@@ -11,19 +11,6 @@ RUN --mount=type=secret,id=aws-storage-config,target=/mnt/aws-storage-config,uid
   's3://rhoai-edge-models/bike-rentals-auto-ml' \
   /home/bike-rentals-auto-ml
 
-# # Download model from Azure
-# FROM quay.io/opendatahub/kserve-storage-initializer:v0.11 as azure_downloader
-
-# # az-storage-credentials is bound by running, e.g.: podman build --secret id=az-storage-credentials,src=./az-storage-credentials
-# # The file should have this contents:
-# #   AZ_TENANT_ID=tenant_id
-# #   AZ_CLIENT_ID=client_id
-# #   AZ_CLIENT_SECRET=client_secret
-# RUN --mount=type=secret,id=az-storage-credentials,target=/mnt/az-storage-credentials,uid=1000 \
-#   export $(cat /mnt/az-storage-credentials) && /storage-initializer/scripts/initializer-entrypoint \
-#   'https://modelstoreaccount.blob.core.windows.net/model-store/model.joblib' \
-#   /home/kserve
-
 # Code written by @israel-hdez https://gist.github.com/israel-hdez/1848d5a9788140c6f2e42ce316c70d5b#file-containerfile-mlserver-mlflow
 FROM registry.access.redhat.com/ubi9/python-39:1 as env-creator
 
@@ -38,7 +25,7 @@ RUN mkdir -p ~/miniconda3 && \
 COPY --from=s3_downloader /home/bike-rentals-auto-ml/ /opt/app-root/src/model/
 
 # Clone a repo that contains an MLFlow model. This one comes from Azure ML.
-# From the cloned repo, take only the model of interest: bike-share-auto-ml
+# From the cloned repo, take only the model of interest: bike-rentals-auto-ml
 # RUN git clone --depth 1 --branch dev https://github.com/piotrpdev/azureml-model-to-edge.git && \
 #   mkdir model && \
 #   cp -R azureml-model-to-edge/models/bike-rentals-auto-ml/* model/
