@@ -3,27 +3,23 @@ kind: PipelineRun
 metadata:
   labels:
     tekton.dev/pipeline: azureml-container
-  generateName: azureml-container-
+  generateName: azureml-container-bike-rentals-
 spec:
   params:
   - name: model-name
     value: bike-rentals-auto-ml
   - name: model-version
     value: "1"
-  - name: containerfile-url
-    value: "https://raw.githubusercontent.com/piotrpdev/azureml-model-to-edge/dev/containerfiles/Containerfile.seldonio.mlserver.mlflow"
-  - name: azure-env-secret-name
-    value: azure-env
-  - name: aws-env-secret-name
-    value: aws-env
+  - name: aws-bucket-name
+    value: rhoai-edge-models
   pipelineRef:
     name: azureml-container
   serviceAccountName: pipeline
   timeout: 1h0m0s
   workspaces:
-  - name: ws
-    persistentVolumeClaim:
-      claimName: build-cache-pvc
   - name: docker
     persistentVolumeClaim:
       claimName: dockerfile-cache-pvc
+  - name: aws-secret
+    secret:
+        secretName: aws-env

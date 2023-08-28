@@ -4,9 +4,6 @@ metadata:
   name: oc-debug-pod
 spec:
   volumes:
-    - name: build-cache-pv
-      persistentVolumeClaim:
-        claimName: build-cache-pvc
     - name: dockerfile-cache-pv
       persistentVolumeClaim:
         claimName: dockerfile-cache-pvc
@@ -16,7 +13,5 @@ spec:
     stdin: true
     tty: true
     volumeMounts:
-        - mountPath: "/mnt/build-cache-pv"
-          name: build-cache-pv
         - mountPath: "/mnt/dockerfile-cache-pv"
           name: dockerfile-cache-pv

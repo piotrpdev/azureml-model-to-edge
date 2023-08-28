@@ -9,28 +9,38 @@ spec:
   - default: "1"
     name: model-version
     type: string
-  - name: containerfile-url
-    type: string
-  - default: azure-env
-    name: azure-env-secret-name
-    type: string
-  - default: aws-env
-    name: aws-env-secret-name
+  - name: aws-bucket-name
     type: string
   tasks:
-  - name: download-containerfile
+  - name: kserve-download-model
     params:
     - name: model-name
       value: $(params.model-name)
-    - name: containerfile-url
-      value: $(params.containerfile-url)
     - name: current-namespace
       value: $(context.pipelineRun.namespace)
+    - name: aws-bucket-name
+      value: $(params.aws-bucket-name)
     taskRef:
       kind: Task
-      name: download-containerfile
+      name: kserve-download-model
     workspaces:
-    - name: dockerfile
+    - name: workspace
+      workspace: docker
+    - name: aws-secret
+      workspace: aws-secret
+  - name: check-model-exists
+    params:
+    - name: model-name
+      value: $(params.model-name)
+    - name: current-namespace
+      value: $(context.pipelineRun.namespace)
+    runAfter:
+     - kserve-download-model
+    taskRef:
+      kind: Task
+      name: check-model-exists
+    workspaces:
+    - name: workspace
       workspace: docker
   - name: create-imagestream
     params:
@@ -40,7 +50,7 @@ spec:
     - name: VERSION
       value: latest
     runAfter:
-     - download-containerfile
+     - check-model-exists
     taskRef:
       kind: ClusterTask
       name: openshift-client
@@ -53,7 +63,7 @@ spec:
     - name: STORAGE_DRIVER
       value: vfs
     - name: DOCKERFILE
-      value: ./Dockerfile
+      value: ./$(params.model-name)/Containerfile
     - name: CONTEXT
       value: .
     - name: TLSVERIFY
@@ -74,9 +84,6 @@ spec:
     workspaces:
     - name: source
       workspace: docker
-    - name: aws-secret
-      secret:
-        secretName: $(params.aws-env)
   workspaces:
-  - name: ws
   - name: docker
+  - name: aws-secret
