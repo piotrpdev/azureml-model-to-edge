@@ -21,10 +21,54 @@ spec:
   - name: deploy-container
     params:
     - name: SCRIPT
-      value: "oc create deployment $(params.model-name)-$(params.model-version) --image=$(params.model-name):$(params.model-version)
-        --port=8080 -n $(params.target-namespace) --dry-run=client -o yaml | oc apply
-        -f - \noc wait deployment -n $(params.target-namespace) $(params.model-name)-$(params.model-version)
-        --for condition=Available=True --timeout=300s"
+      value: |
+        cat <<EOF | oc apply -f -
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          creationTimestamp: null
+          labels:
+            app: $(params.model-name)-$(params.model-version)
+          name: $(params.model-name)-$(params.model-version)
+          namespace: $(params.target-namespace)
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: $(params.model-name)-$(params.model-version)
+          strategy: {}
+          template:
+            metadata:
+              creationTimestamp: null
+              labels:
+                app: $(params.model-name)-$(params.model-version)
+            spec:
+              containers:
+              - image: $(params.model-name):$(params.model-version)
+                name: $(params.model-name)-$(params.model-version)
+                livenessProbe:
+                  failureThreshold: 8
+                  httpGet:
+                    path: /v2/health/live
+                    port: 8080
+                    scheme: HTTP
+                  periodSeconds: 5
+                  successThreshold: 1
+                readinessProbe:
+                  failureThreshold: 8
+                  httpGet:
+                    path: /v2/models/$(params.model-name)/ready
+                    port: 8080
+                    scheme: HTTP
+                  periodSeconds: 5
+                  successThreshold: 1
+                ports:
+                - containerPort: 8080
+                resources: {}
+        status: {}
+        EOF
+        oc wait deployment -n $(params.target-namespace) $(params.model-name)-$(params.model-version) --for condition=Available=True --timeout=120s
+        oc wait pod -n $(params.target-namespace) -l app=$(params.model-name)-$(params.model-version) --for condition=Ready=True --timeout=120s
     taskRef:
       kind: ClusterTask
       name: openshift-client
@@ -57,24 +101,24 @@ spec:
     workspaces:
     - name: test-data
       workspace: test-data
-  - name: skopeo-copy
-    params:
-    - name: srcImageURL
-      value: docker://image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.model-name):$(params.model-version)
-    - name: destImageURL
-      value: docker://quay.io/$(params.target-imagerepo)/$(params.model-name):$(params.model-version)
-    - name: srcTLSverify
-      value: "true"
-    - name: destTLSverify
-      value: "true"
-    runAfter:
-    - test-mlflow-rest-svc
-    taskRef:
-      kind: ClusterTask
-      name: skopeo-copy
-    workspaces:
-    - name: images-url
-      workspace: workspace
+  # - name: skopeo-copy
+  #   params:
+  #   - name: srcImageURL
+  #     value: docker://image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.model-name):$(params.model-version)
+  #   - name: destImageURL
+  #     value: docker://quay.io/$(params.target-imagerepo)/$(params.model-name):$(params.model-version)
+  #   - name: srcTLSverify
+  #     value: "true"
+  #   - name: destTLSverify
+  #     value: "true"
+  #   runAfter:
+  #   - test-mlflow-rest-svc
+  #   taskRef:
+  #     kind: ClusterTask
+  #     name: skopeo-copy
+  #   workspaces:
+  #   - name: images-url
+  #     workspace: workspace
   workspaces:
   - name: workspace
   - name: test-data

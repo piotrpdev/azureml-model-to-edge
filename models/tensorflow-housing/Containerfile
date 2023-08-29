@@ -21,4 +21,4 @@ EXPOSE 9090 8080
 
 USER ovms
 
-CMD ["/ovms/bin/ovms", "--model_path", "/models", "--model_name", "tensorflow_housing", "--port", "9090", "--rest_port", "8080", "--shape", "auto"]
+CMD ["/ovms/bin/ovms", "--model_path", "/models", "--model_name", "tensorflow-housing", "--port", "9090", "--rest_port", "8080", "--shape", "auto"]

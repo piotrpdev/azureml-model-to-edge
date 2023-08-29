@@ -11,7 +11,7 @@ spec:
   - name: model-version
     value: "1"
   - name: test-endpoint
-    value: "v1/models/tensorflow_housing/versions/1:predict"
+    value: "v1/models/tensorflow-housing/versions/1:predict"
   - name: target-namespace
     value: $(context.pipelineRun.namespace)
   pipelineRef:
