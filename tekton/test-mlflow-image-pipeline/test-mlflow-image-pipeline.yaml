@@ -101,24 +101,24 @@ spec:
     workspaces:
     - name: test-data
       workspace: test-data
-  # - name: skopeo-copy
-  #   params:
-  #   - name: srcImageURL
-  #     value: docker://image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.model-name):$(params.model-version)
-  #   - name: destImageURL
-  #     value: docker://quay.io/$(params.target-imagerepo)/$(params.model-name):$(params.model-version)
-  #   - name: srcTLSverify
-  #     value: "true"
-  #   - name: destTLSverify
-  #     value: "true"
-  #   runAfter:
-  #   - test-mlflow-rest-svc
-  #   taskRef:
-  #     kind: ClusterTask
-  #     name: skopeo-copy
-  #   workspaces:
-  #   - name: images-url
-  #     workspace: workspace
+  - name: skopeo-copy
+    params:
+    - name: srcImageURL
+      value: docker://image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.model-name):$(params.model-version)
+    - name: destImageURL
+      value: docker://quay.io/$(params.target-imagerepo)/$(params.model-name):$(params.model-version)
+    - name: srcTLSverify
+      value: "true"
+    - name: destTLSverify
+      value: "true"
+    runAfter:
+    - test-mlflow-rest-svc
+    taskRef:
+      kind: ClusterTask
+      name: skopeo-copy
+    workspaces:
+    - name: images-url
+      workspace: workspace
   workspaces:
   - name: workspace
   - name: test-data
